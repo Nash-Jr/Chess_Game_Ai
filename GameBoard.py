@@ -10,6 +10,20 @@ import sys
 import numpy as np
 
 
+def convert_to_notation(row, col):
+    file = chr(97 + col)
+    rank = str(8 - row)
+    return file + rank
+
+
+def convert_from_notation(notation):
+    file = notation[0]
+    rank = notation[1]
+    col = ord(file) - 97
+    row = 8 - int(rank)
+    return (row, col)
+
+
 pieces_paths = {
     "w_king": r"C:\Users\nacho\New folder\Chess\Chess_Pieces\Chess_klt60.png",
     "w_queen": r"C:\Users\nacho\New folder\Chess\Chess_Pieces\Chess_qlt60.png",
@@ -44,29 +58,65 @@ class Piece_Movement:
         else:
             raise ValueError(f"No image path found for {piece_key}")
 
+    def can_capture(self, board, start_pos, end_pos):
+        if 0 <= end_pos[0] < 8 and 0 <= end_pos[1] < 8:
+            if board[end_pos[0]][end_pos[1]] is not None:
+                if board[end_pos[0]][end_pos[1]].colour != self.colour:
+                    return True
+        return False
+
     def is_valid_move(self, board, start_pos, end_pos):
         if self.type == "pawn":
+            if not (0 <= end_pos[0] < 8 and 0 <= end_pos[1] < 8):
+                return False
+
             if self.colour == "b":
-                board[start_pos[0]][start_pos[1]] = None
-                end_pos = (start_pos[0] + 1, start_pos[1])
-                self.Position = end_pos
-                board[end_pos[0]][end_pos[1]] = self
-            elif self.colour == "w":
-                board[start_pos[0]][start_pos[1]] = None
-                end_pos = (start_pos[0] - 1, start_pos[1])
-                self.Position = end_pos
-                board[end_pos[0]][end_pos[1]] = self
-        if self.type == "rook":
-            if self.colour == "b":
-                board[start_pos[0]][start_pos[1]] = None
-                offset_x = end_pos[1] - start_pos[1]
-                offset_y = end_pos[0] - start_pos[0]
-                end_pos_x = (start_pos[0], start_pos[1] + offset_x)
-                end_pos_y = (start_pos[0] + offset_y, start_pos[1])
-                for sqr_v in range(start_pos[0], end_pos_y, 1):
-                    # Check if the square (start_row, sqr) is empty or blocked.
-                for sqr_h in range(start_pos[0] + 7, start_pos[0], 1):
-                    # Check if the square (start_row, sqr) is empty or blocked.
+                if end_pos[0] == start_pos[0] + 1:
+                    if board[end_pos[0]][end_pos[1]] is None:
+                        return True
+
+                elif start_pos[0] == 1 and end_pos[0] == start_pos[0] + 2:
+                    if board[start_pos[0] + 1][end_pos[1]] is None and board[end_pos[0]][end_pos[1]] is None:
+                        return True
+
+                elif abs(start_pos[1] - end_pos[1]) == 1 and start_pos[0] + 1 == end_pos[0]:
+                    if self.can_capture(board, start_pos, end_pos):
+                        return True
+
+            if self.colour == "w":
+                if end_pos[0] == start_pos[0] - 1:
+                    if board[end_pos[0]][end_pos[1]] is None:
+                        return True
+
+                elif start_pos[0] == 6 and end_pos[0] == start_pos[0] - 2:
+                    if board[start_pos[0] - 1][end_pos[1]] is None and board[end_pos[0]][end_pos[1]] is None:
+                        return True
+
+                elif abs(start_pos[1] - end_pos[1]) == 1 and start_pos[0] - 1 == end_pos[0]:
+                    if self.can_capture(board, start_pos, end_pos):
+                        return True
+
+        if self.type == 'Rook':
+            if self.colour == 'b':
+
+                if start_pos[0] == end_pos[0]:  # It's a vertical move
+                    if end_pos[0] - start_pos[0] > 0:
+                        step = 1
+                    else:
+                        step = -1
+
+                    for row in range(start_pos[0] + step, end_pos[0], step):
+                        if board[row][start_pos[1]] is not None:
+                            return False
+                step = 1 if start_pos[1] < end_pos[1] else -1
+                for col in range(start_pos[1] + step, end_pos[1], step):
+                    pass  # Placeholder for obstacle-checking logic
+            elif start_pos[1] == end_pos[1]:  # It's a vertical move
+                step = 1 if start_pos[0] < end_pos[0] else -1
+                for row in range(start_pos[0] + step, end_pos[0], step):
+                    pass  # Placeholder for obstacle-checking logic
+            else:
+                return False  # Invalid move (not horizontal or vertical)
 
 
 pygame.init()
